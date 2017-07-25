@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'posconv.ui'
 #
-# Created by: PyQt5 UI code generator 5.8.2
+# Created by: PyQt5 UI code generator 5.9
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -53,6 +53,17 @@ class Ui_PosConv(object):
         self.horizontalLayout_2.addWidget(self.rpmBox)
         self.horizontalLayout.addLayout(self.horizontalLayout_2)
         self.paramLayout.addLayout(self.horizontalLayout)
+        self.horizontalLayout_4 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_4.setObjectName("horizontalLayout_4")
+        self.label = QtWidgets.QLabel(PosConv)
+        self.label.setObjectName("label")
+        self.horizontalLayout_4.addWidget(self.label)
+        self.directionComboBox = QtWidgets.QComboBox(PosConv)
+        self.directionComboBox.setObjectName("directionComboBox")
+        self.directionComboBox.addItem("")
+        self.directionComboBox.addItem("")
+        self.horizontalLayout_4.addWidget(self.directionComboBox)
+        self.paramLayout.addLayout(self.horizontalLayout_4)
         self.verticalLayout_3.addLayout(self.paramLayout)
         self.fileLayout = QtWidgets.QHBoxLayout()
         self.fileLayout.setObjectName("fileLayout")
@@ -102,6 +113,9 @@ class Ui_PosConv(object):
         self.simulateButton.setText(_translate("PosConv", "Sim&ulate arena frame"))
         self.pulsesPerRotationLabel.setText(_translate("PosConv", "Pulses per rotation"))
         self.rpmLabel.setText(_translate("PosConv", "Seconds per revolution"))
+        self.label.setText(_translate("PosConv", "Arena rotation direction"))
+        self.directionComboBox.setItemText(0, _translate("PosConv", "CW"))
+        self.directionComboBox.setItemText(1, _translate("PosConv", "CCW"))
         __sortingEnabled = self.fileList.isSortingEnabled()
         self.fileList.setSortingEnabled(False)
         item = self.fileList.item(0)

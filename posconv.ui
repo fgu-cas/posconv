@@ -89,6 +89,31 @@
        </item>
       </layout>
      </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_4">
+       <item>
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string>Arena rotation direction</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="directionComboBox">
+         <item>
+          <property name="text">
+           <string>CW</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>CCW</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+      </layout>
+     </item>
     </layout>
    </item>
    <item>

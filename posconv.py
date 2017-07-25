@@ -2,9 +2,10 @@
 import sys, os, csv, re, math
 from PyQt5.QtWidgets import QApplication, QDialog, QFileDialog, QMessageBox
 from PyQt5.QtCore import QSettings
+#import matplotlib.pyplot as plt
 from ui_posconv import Ui_PosConv
 
-def processFile(track, hasPosition, number):
+def processFile(track, hasPosition, cw, number):
   params = {}
   frames = []
   header = []
@@ -25,12 +26,12 @@ def processFile(track, hasPosition, number):
     header.append(line)
   frames = [f for f in frames if f[2] is not '-1' and f[3] is not '-1']
   if hasPosition:
-    processed_frames = calculateArenaFrame(frames, params, number)
+    processed_frames = calculateArenaFrame(frames, params, cw, number)
   else:
-    processed_frames = simulateArenaFrame(frames, params, number)
+    processed_frames = simulateArenaFrame(frames, params, cw, number)
   return "".join(header + processed_frames)
 
-def calculateArenaFrame(frames, params, pulses_per_revolution):
+def calculateArenaFrame(frames, params, cw, pulses_per_revolution):
   our_frames = []
   positions = list((float(re.split("[ ]+", x)[6]) for x in frames))
 
@@ -80,20 +81,32 @@ def calculateArenaFrame(frames, params, pulses_per_revolution):
     positions[i] = positions[last_index] + (last_step * (i - last_index))
     i += 1
 
+  points = []
+  arena_points = []
   for i, frame in enumerate(frames):
     frame_split = re.split("[ ]+", frame)
-    position = positions[i] / pulses_per_revolution
+    if frame_split[2] == '-1' and frame_split[3] == '-1':
+      continue
+    position = positions[i] / pulses_per_revolution * 1 if cw else -1
     arena_point = rotatePoint((params["arena_x"], params["arena_y"]), (float(frame_split[2]), float(frame_split[3])), position * 2 * math.pi)
+
+    points.append((float(frame_split[2]), float(frame_split[3])))
+    arena_points.append(arena_point)
+
     our_frames.append("%s %f %f\n" % (frame[:-1], arena_point[0], arena_point[1]))
+
   return our_frames
 
-def simulateArenaFrame(frames, params, revolutions_per_minute):
+def simulateArenaFrame(frames, params, cw, revolutions_per_minute):
   our_frames = []
   for frame in frames:
     frame_split = re.split("[ ]+", frame)
-    position = float(frame_split[1]) / 1000 / 60 * revolutions_per_minute
+    if frame_split[2] == '-1' and frame_split[3] == '-1':
+      continue
+    position = float(frame_split[1]) / 1000 / 60 * revolutions_per_minute * 1 if cw else -1
     arena_point = rotatePoint((params["arena_x"], params["arena_y"]), (float(frame_split[2]), float(frame_split[3])), position * 2 * math.pi)
     our_frames.append("%s %f %f\n" % (frame[:-1], arena_point[0], arena_point[1]))
+
   return our_frames
 
 def rotatePoint(origin, point, angle):
@@ -103,6 +116,15 @@ def rotatePoint(origin, point, angle):
   qx = ox + math.cos(angle) * (px - ox) - math.sin(angle) * (py - oy)
   qy = oy + math.sin(angle) * (px - ox) + math.cos(angle) * (py - oy)
   return qx, qy
+
+def renderDebug(center, a):
+  fig, ax = plt.subplots()
+  # ax.set_xlim([params["arena_x"]-params["diameter"]/2-5,params["arena_x"]+params["diameter"]/2+5])
+  # ax.set_ylim([params["arena_y"]-params["diameter"]/2-5,params["arena_y"]+params["diameter"]/2+5])
+  ax.set_aspect('equal', adjustable='box')
+  ax.add_artist(plt.Circle(center,5,color='r',fill=True))
+  ax.plot([x[0] for x in a], [x[1] for x in a])
+  plt.show()
 
 class PosConv(QDialog, Ui_PosConv):
 
@@ -169,15 +191,16 @@ class PosConv(QDialog, Ui_PosConv):
 
   def processButtonClicked(self, _):
     message = QMessageBox()
-    # try:
     num = 0
+    cw = self.directionComboBox.currentText() == "CW"
+    print(cw)
     for track in self.files:
       if self.calculateButton.isChecked():
         with open(track, 'r') as f:
-          processed = processFile(f, True, self.pulsesPerRotationBox.value())
+          processed = processFile(f, True, cw, self.pulsesPerRotationBox.value())
       else:
         with open(track, 'r') as f:
-          processed = processFile(f, False, 1 / (self.rpmBox.value() / 60))
+          processed = processFile(f, False, cw, 1 / (self.rpmBox.value() / 60))
       filename = ".".join(track.split(".")[:-1]) + "_ARENA.dat"
       with open(filename, "w") as f:
         f.write(processed)
