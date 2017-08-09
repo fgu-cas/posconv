@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 import sys, os, csv, re, math
+
+import functools
 from PyQt5.QtWidgets import QApplication, QDialog, QFileDialog, QMessageBox
 from PyQt5.QtCore import QSettings
 from ui_posconv import Ui_PosConv
@@ -152,11 +154,21 @@ class PosConv(QDialog, Ui_PosConv):
 
         self.show()
 
+    def getDatFiles(self, directory):
+        res = []
+        for entry in os.listdir(directory):
+            full_path = directory + "/" + entry
+            if os.path.isdir(full_path):
+                res += self.getDatFiles(full_path)
+            elif full_path[-4:] == ".dat" and "_ARENA" not in full_path:
+                res.append(full_path)
+        return res
+
     def addDirButtonClicked(self, _):
         directory = QFileDialog.getExistingDirectory(self, "Directory with tracks", self.settings.value("lastLogs"))
         if directory:
             self.settings.setValue("lastLogs", directory)
-            logs = [directory + '/' + x for x in os.listdir(directory) if x[-4:] == ".dat"]
+            logs = self.getDatFiles(directory)
             logs = sorted(logs, key=os.path.getmtime)
             self.files += logs
             self.updateUI()
