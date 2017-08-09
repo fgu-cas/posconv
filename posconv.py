@@ -19,6 +19,8 @@ def process_file(track, has_position, cw, number):
             frames.append(line)
             continue
         elif "%Row" in line:
+            if "Position" not in line and has_position:
+                raise Exception("File \"%s\" doesn't include position data." % track.name)
             line = re.sub(r"Position([^ ])", "Position \\1", line)
             line = re.sub(r"\)", "RatArenaX RatArenaY )", line)
         else:
@@ -92,7 +94,7 @@ def calculate_arena_frame(frames, params, cw, pulses_per_revolution):
     for i, frame in enumerate(frames):
         frame_split = re.split("[ ]+", frame)
         if frame_split[2] == '-1' and frame_split[3] == '-1':
-            continue
+            our_frames.append("%s -1 -1\n" % frame[:-1])
         position = positions[i] / pulses_per_revolution * 1 if cw else -1
         arena_point = rotate_point((params["arena_x"], params["arena_y"]),
                                    (float(frame_split[2]), float(frame_split[3])), position * 2 * math.pi)
@@ -110,7 +112,7 @@ def simulate_arena_frame(frames, params, cw, revolutions_per_minute):
     for frame in frames:
         frame_split = re.split("[ ]+", frame)
         if frame_split[2] == '-1' and frame_split[3] == '-1':
-            continue
+            our_frames.append("%s -1 -1\n" % frame[:-1])
         position = float(frame_split[1]) / 1000 / 60 * revolutions_per_minute * 1 if cw else -1
         arena_point = rotate_point((params["arena_x"], params["arena_y"]),
                                    (float(frame_split[2]), float(frame_split[3])), position * 2 * math.pi)
@@ -214,22 +216,23 @@ class PosConv(QDialog, Ui_PosConv):
         message = QMessageBox()
         num = 0
         cw = self.directionComboBox.currentText() == "CW"
-        print(cw)
-        for track in self.files:
-            if self.calculateButton.isChecked():
-                with open(track, 'r') as f:
-                    processed = process_file(f, True, cw, self.pulsesPerRotationBox.value())
-            else:
-                with open(track, 'r') as f:
-                    processed = process_file(f, False, cw, 1 / (self.rpmBox.value() / 60))
-            filename = ".".join(track.split(".")[:-1]) + "_ARENA.dat"
-            with open(filename, "w") as f:
-                f.write(processed)
-            num += 1
-        # except:
-        #   message.setText("Error, processing failed!\n%s | %s" % (sys.exc_info()[0],sys.exc_info()[1]))
-        # else:
-        #   message.setText("Processing successful!\nAll %n files saved with extension _ARENA." % num)
+        # noinspection PyBroadException
+        try:
+            for track in self.files:
+                if self.calculateButton.isChecked():
+                    with open(track, 'r') as f:
+                        processed = process_file(f, True, cw, self.pulsesPerRotationBox.value())
+                else:
+                    with open(track, 'r') as f:
+                        processed = process_file(f, False, cw, 1 / (self.rpmBox.value() / 60))
+                filename = ".".join(track.split(".")[:-1]) + "_ARENA.dat"
+                with open(filename, "w") as f:
+                    f.write(processed)
+                num += 1
+        except:
+            message.setText("Error, processing failed!\n\n%s\n%s" % (sys.exc_info()[0], sys.exc_info()[1]))
+        else:
+            message.setText("Processing successful!\nAll %d files saved with extension _ARENA." % num)
         message.exec_()
 
     def updateUI(self):
@@ -243,6 +246,7 @@ class PosConv(QDialog, Ui_PosConv):
             self.fileList.addItem("Add files...")
 
 
+# noinspection SpellCheckingInspection,PyUnusedLocal
 def main():
     app = QApplication(sys.argv)
     posconv = PosConv()
