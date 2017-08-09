@@ -1,9 +1,12 @@
 #!/usr/bin/env python
-import sys, os, csv, re, math
+import math
+import os
+import re
+import sys
 
-import functools
-from PyQt5.QtWidgets import QApplication, QDialog, QFileDialog, QMessageBox
 from PyQt5.QtCore import QSettings
+from PyQt5.QtWidgets import QApplication, QDialog, QFileDialog, QMessageBox
+
 from ui_posconv import Ui_PosConv
 
 
