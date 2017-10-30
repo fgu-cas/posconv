@@ -31,7 +31,6 @@ def process_file(track, has_position, cw, number):
             if tmp:
                 params["arena_y"] = float(tmp[0])
         header.append(line)
-    frames = [f for f in frames if f[2] is not '-1' and f[3] is not '-1']
     if has_position:
         processed_frames = calculate_arena_frame(frames, params, cw, number)
     else:
@@ -95,14 +94,15 @@ def calculate_arena_frame(frames, params, cw, pulses_per_revolution):
         frame_split = re.split("[ ]+", frame)
         if frame_split[2] == '-1' and frame_split[3] == '-1':
             our_frames.append("%s -1 -1\n" % frame[:-1])
-        position = positions[i] / pulses_per_revolution * 1 if cw else -1
-        arena_point = rotate_point((params["arena_x"], params["arena_y"]),
-                                   (float(frame_split[2]), float(frame_split[3])), position * 2 * math.pi)
+        else:
+            position = positions[i] / pulses_per_revolution * 1 if cw else -1
+            arena_point = rotate_point((params["arena_x"], params["arena_y"]),
+                                       (float(frame_split[2]), float(frame_split[3])), position * 2 * math.pi)
 
-        points.append((float(frame_split[2]), float(frame_split[3])))
-        arena_points.append(arena_point)
+            points.append((float(frame_split[2]), float(frame_split[3])))
+            arena_points.append(arena_point)
 
-        our_frames.append("%s %f %f\n" % (frame[:-1], arena_point[0], arena_point[1]))
+            our_frames.append("%s %f %f\n" % (frame[:-1], arena_point[0], arena_point[1]))
 
     return our_frames
 
@@ -113,11 +113,11 @@ def simulate_arena_frame(frames, params, cw, revolutions_per_minute):
         frame_split = re.split("[ ]+", frame)
         if frame_split[2] == '-1' and frame_split[3] == '-1':
             our_frames.append("%s -1 -1\n" % frame[:-1])
-        position = float(frame_split[1]) / 1000 / 60 * revolutions_per_minute * 1 if cw else -1
-        arena_point = rotate_point((params["arena_x"], params["arena_y"]),
-                                   (float(frame_split[2]), float(frame_split[3])), position * 2 * math.pi)
-        our_frames.append("%s %f %f\n" % (frame[:-1], arena_point[0], arena_point[1]))
-
+        else:
+            position = float(frame_split[1]) / 1000 / 60 * revolutions_per_minute * 1 if cw else -1
+            arena_point = rotate_point((params["arena_x"], params["arena_y"]),
+                                       (float(frame_split[2]), float(frame_split[3])), position * 2 * math.pi)
+            our_frames.append("%s %f %f\n" % (frame[:-1], arena_point[0], arena_point[1]))
     return our_frames
 
 
